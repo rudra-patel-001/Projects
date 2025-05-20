@@ -1,42 +1,56 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const DownloadButton = ({ file }) => {
-  const handleDownload = () => {
-    // Debugging: Check if the file prop is received
-    console.log("File prop received in DownloadButton:", file);
+  const [format, setFormat] = useState('jpg'); // Default format is JPG
 
+  const handleDownload = () => {
     if (!file) {
       console.error("No file provided for download.");
       return;
     }
 
-    try {
-      // Create a temporary URL for the file
-      const url = URL.createObjectURL(file);
-      console.log("Generated URL for download:", url);
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
 
-      // Create an anchor element and set its attributes
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      canvas.width = img.width;
+      canvas.height = img.height;
+
+      ctx.drawImage(img, 0, 0);
+
+      const mimeType = `image/${format}`;
+      const dataUrl = canvas.toDataURL(mimeType);
+
       const link = document.createElement('a');
-      link.href = url;
-      link.download = `compressed_${file.name || 'image'}`; // Fallback to 'image' if file.name is undefined
-
-      // Trigger the download by simulating a click
+      link.href = dataUrl;
+      link.download = `processed_image.${format}`;
       link.click();
 
-      // Revoke the object URL after a short delay to free up resources
-      setTimeout(() => {
-        URL.revokeObjectURL(url);
-        console.log("Revoked URL:", url);
-      }, 1000);
-    } catch (error) {
-      console.error("Error during file download:", error);
-    }
+      URL.revokeObjectURL(img.src);
+    };
   };
 
   return (
-    <div style={{ margin: '20px', textAlign: 'center' }}>
+    <div style={{ marginTop: '20px' }}>
+      <label htmlFor="format-select" style={{ marginRight: '10px' }}>
+        Format:
+      </label>
+      <select
+        id="format-select"
+        value={format}
+        onChange={(e) => setFormat(e.target.value)}
+        style={{ marginRight: '10px', padding: '5px' }}
+      >
+        <option value="jpg">JPG</option>
+        <option value="png">PNG</option>
+        <option value="gif">GIF</option>
+        <option value="bmp">BMP</option>
+      </select>
       <button onClick={handleDownload}>
-        Download Compressed Image
+        Download Image
       </button>
     </div>
   );
